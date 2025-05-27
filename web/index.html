@@ -1,0 +1,119 @@
+<html>
+  <head> </head>
+  <body>
+    <form id="form">
+      <input
+        type="text"
+        name="thing"
+        value="TATAFFADTTFDDFTFAFDFTFFATTFDDFTDFTDDTADAAFTTFAAADFFFDTDTTDFATDDDT"
+        size="100"
+      />
+      <button type="submit" disabled>Decode</button>
+    </form>
+
+    <pre id="result"></pre>
+
+    <script>
+      WebAssembly.instantiateStreaming(fetch("imb.wasm")).then(
+        ({ instance }) => {
+          const { decodeStringWasm, malloc, free, memory } = instance.exports;
+
+          function allocString(str) {
+            str += "\0"; // add null terminator
+
+            const encoder = new TextEncoder();
+            const encoded = encoder.encode(str);
+
+            const ptr = instance.exports.malloc(encoded.length);
+
+            const mem = new Uint8Array(instance.exports.memory.buffer);
+
+            for (let i = 0; i < encoded.length; i++) {
+              mem[ptr + i] = encoded[i];
+            }
+
+            return [ptr, encoded.length];
+          }
+
+          function decodeBarcode(str) {
+            if (!/^[adft]{65}$/i.test(str)) throw new Error("invalid string");
+
+            const [string, stringLen] = allocString(str);
+
+            const result = decodeStringWasm(string);
+
+            free(string, stringLen);
+
+            if (result == 0) throw new Error("invalid character");
+            if (result == 1) throw new Error("decoding error");
+            if (result == 2) throw new Error("unknown error");
+            if (result == 3) throw new Error("invalid checksum");
+
+            const resultString = new TextDecoder().decode(
+              new Uint8Array(memory.buffer).subarray(result, result + 31)
+            );
+
+            free(result, 31);
+
+            return parseDecoded(resultString);
+          }
+
+          function parseDecoded(decoded) {
+            const tracking_code = decoded.substring(0, 20);
+            const routing_code = decoded.substring(20).replace(/[^0-9]/g, "");
+
+            let zip, mailerId, serialNumber;
+
+            if (routing_code.length == 11) {
+              zip = `${routing_code.substring(0, 5)}-${routing_code.substring(
+                5,
+                9
+              )}(${routing_code.substring(9, 11)})`;
+            } else if (routing_code.length == 9) {
+              zip = `${routing_code.substring(0, 5)}-${routing_code.substring(
+                5,
+                9
+              )}`;
+            } else {
+              zip = routing_code;
+            }
+
+            if (tracking_code[5] == 9) {
+              mailerId = tracking_code.substring(5, 5 + 9);
+              serialNumber = tracking_code.substring(14, 14 + 6);
+            } else {
+              mailerId = tracking_code.substring(5, 5 + 6);
+              serialNumber = tracking_code.substring(11, 11 + 9);
+            }
+
+            return {
+              tracking_code: {
+                barcodeId: tracking_code.substring(0, 2),
+                serviceType: tracking_code.substring(2, 5),
+                mailerId,
+                serialNumber,
+              },
+              zip,
+            };
+          }
+
+          document.getElementById("form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            try {
+              const result = decodeBarcode(e.target.thing.value);
+              document.getElementById("result").innerText = JSON.stringify(
+                result,
+                null,
+                2
+              );
+            } catch (e) {
+              document.getElementById("result").innerText = e;
+            }
+          });
+
+          document.querySelector("button[type=submit]").disabled = false;
+        }
+      );
+    </script>
+  </body>
+</html>
