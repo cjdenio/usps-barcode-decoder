@@ -156,7 +156,7 @@ fn generateChecksum(data: [13]u8) u16 {
     const generator_polynomial: u16 = 0x0F35;
     var checksum: u16 = 0x07ff;
 
-    var byte: u16 = data[0] << 5;
+    var byte: u16 = @as(u16, data[0]) << 5;
 
     for (2..8) |_| {
         if (((checksum ^ byte) & 0x400) != 0) {
@@ -206,7 +206,6 @@ fn decode(bars: [65]BarType) Error!BarcodeResult {
         switch (bitsSet(u13, character.*)) {
             8, 11 => {
                 character.* ^= 0b1111111111111;
-                checksum |= (@as(u11, 1) << @intCast(i));
                 checksum |= (@as(u11, 1) << @intCast(i));
             },
             2, 5 => {},
