@@ -134,7 +134,7 @@ fn bitsSet(comptime T: type, value: T) u8 {
     return count;
 }
 
-fn findCodeword(character: u13) u13 {
+fn findCodeword(character: u13) ?u13 {
     const b = bitsSet(u13, character);
     if (b == 2) {
         for (character_table_2, 0..) |item, codeword| {
@@ -149,7 +149,8 @@ fn findCodeword(character: u13) u13 {
             }
         }
     }
-    unreachable;
+
+    return null;
 }
 
 fn generateChecksum(data: [13]u8) u16 {
@@ -212,7 +213,7 @@ fn decode(bars: [65]BarType) Error!BarcodeResult {
             else => return error.DecodingError,
         }
 
-        character.* = findCodeword(character.*);
+        character.* = findCodeword(character.*).?;
     }
 
     characters[9] /= 2;
@@ -280,7 +281,6 @@ pub fn decodeString(str: *const [65:0]u8) Error!BarcodeResult {
             else => return error.InvalidCharacter,
         };
     }
-    const thing = try decode(bars);
 
-    return thing;
+    return try decode(bars);
 }
