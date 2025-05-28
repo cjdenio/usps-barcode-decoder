@@ -1,19 +1,31 @@
-<html>
-  <head> </head>
+<html data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="pico.min.css" />
+  </head>
   <body>
-    <form id="form">
-      <input
-        type="text"
-        name="thing"
-        value="TATAFFADTTFDDFTFAFDFTFFATTFDDFTDFTDDTADAAFTTFAAADFFFDTDTTDFATDDDT"
-        size="100"
-      />
-      <button type="submit" disabled>Decode</button>
-    </form>
+    <main class="container">
+      <form id="form">
+        <fieldset role="group">
+          <input type="text" name="thing" placeholder="Enter barcode here..." />
+          <button type="submit" disabled>Decode</button>
+        </fieldset>
+        <small><a href="#" id="example">Try an example</a></small>
+      </form>
 
-    <pre id="result"></pre>
+      <pre id="result"></pre>
+    </main>
 
-    <a href="https://github.com/cjdenio/usps-barcode-decoder">[source]</a>
+    <footer class="container">
+      <small>
+        <a
+          href="https://github.com/cjdenio/usps-barcode-decoder"
+          class="secondary"
+          >[source on GitHub]</a
+        >
+      </small>
+    </footer>
 
     <script>
       WebAssembly.instantiateStreaming(fetch("imb.wasm")).then(
@@ -114,6 +126,13 @@
           });
 
           document.querySelector("button[type=submit]").disabled = false;
+
+          document.getElementById("example").addEventListener("click", (e) => {
+            e.preventDefault();
+            document.querySelector("form input[name=thing]").value =
+              "TATAFFADTTFDDFTFAFDFTFFATTFDDFTDFTDDTADAAFTTFAAADFFFDTDTTDFATDDDT";
+            document.getElementById("form").requestSubmit();
+          });
         }
       );
     </script>
