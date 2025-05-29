@@ -206,7 +206,7 @@ fn decode(bars: [65]BarType) Error!BarcodeResult {
     for (&characters, 0..) |*character, i| {
         switch (bitsSet(u13, character.*)) {
             8, 11 => {
-                character.* ^= 0b1111111111111;
+                character.* = ~character.*;
                 checksum |= (@as(u11, 1) << @intCast(i));
             },
             2, 5 => {},
