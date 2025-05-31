@@ -188,7 +188,29 @@ fn generateChecksum(data: [13]u8) u16 {
     return checksum;
 }
 
-fn decode(bars: [65]BarType) Error!BarcodeResult {
+fn flipBarcode(bars: [65]BarType) [65]BarType {
+    var flipped: [65]BarType = undefined;
+
+    var i: u8 = 65;
+
+    for (bars) |bar| {
+        i -= 1;
+
+        flipped[i] = switch (bar) {
+            .ascending => .descending,
+            .descending => .ascending,
+            else => bar,
+        };
+    }
+
+    return flipped;
+}
+
+pub fn decode(bars: [65]BarType) Error!BarcodeResult {
+    return tryDecode(bars) catch tryDecode(flipBarcode(bars));
+}
+
+fn tryDecode(bars: [65]BarType) Error!BarcodeResult {
     var characters = [_]u13{0} ** 10;
 
     for (bars, 0..) |bar, i| {
