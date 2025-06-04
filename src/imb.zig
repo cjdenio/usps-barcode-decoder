@@ -103,7 +103,7 @@ fn generateCharacterTable(n: u8, comptime len: usize) [len]u13 {
 }
 
 const character_table_5 = generateCharacterTable(5, 1287);
-const character_table_2 = generateCharacterTable(2, 77);
+const character_table_2 = generateCharacterTable(2, 78);
 
 const BarType = enum {
     descending,
@@ -235,7 +235,7 @@ fn tryDecode(bars: [65]BarType) Error!BarcodeResult {
             else => return error.DecodingError,
         }
 
-        character.* = findCodeword(character.*).?;
+        character.* = findCodeword(character.*) orelse return error.DecodingError;
     }
 
     characters[9] /= 2;
