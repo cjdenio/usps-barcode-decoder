@@ -6,8 +6,7 @@ const allocator = std.heap.wasm_allocator;
 export fn decodeStringWasm(str: *const [65:0]u8) usize {
     if (imb.decodeString(str)) |v| {
         const ptr = allocator.create([31]u8) catch unreachable;
-        const result = v.tracking_code ++ v.routing_code;
-        @memcpy(ptr, &result);
+        ptr.* = v.tracking_code ++ v.routing_code;
         return @intFromPtr(ptr);
     } else |e| switch (e) {
         error.InvalidCharacter => return 0,
